@@ -97,6 +97,21 @@ namespace Dastan
 			Console.WriteLine();
 		}
 
+		private int GetValidInt()
+		{
+			int output = int.MinValue;
+			do
+			{
+				if (!int.TryParse(Console.ReadLine(), out output))
+				{
+					Console.WriteLine("The input is an invalid data type. Should be an integer.");
+				}
+			}
+			while (output == int.MinValue);
+
+			return output;
+		}
+
 		private int GetIndexOfSquare(int SquareReference)
 		{
 			int Row = SquareReference / 10;
@@ -115,7 +130,12 @@ namespace Dastan
 
 		private bool CheckSquareIsValid(int SquareReference, bool StartSquare)
 		{
-			if (!CheckSquareInBounds(SquareReference)) return false;
+			if (!CheckSquareInBounds(SquareReference))
+			{
+				Console.WriteLine("The input square isn't in bounds.");
+				return false;
+			}
+
 			Piece PieceInSquare = Board[GetIndexOfSquare(SquareReference)].GetPieceInSquare();
 			if (PieceInSquare == null)
 			{
@@ -163,16 +183,26 @@ namespace Dastan
 		private int GetSquareReference(string Description)
 		{
 			int SelectedSquare;
+
 			Console.Write("Enter the square " + Description + " (row number followed by column number): ");
-			SelectedSquare = Convert.ToInt32(Console.ReadLine());
+			SelectedSquare = GetValidInt();
 			return SelectedSquare;
 		}
 
 		private void UseMoveOptionOffer()
 		{
 			int ReplaceChoice;
-			Console.Write("Choose the move option from your queue to replace (1 to 5): ");
-			ReplaceChoice = Convert.ToInt32(Console.ReadLine());
+			int input = int.MinValue;
+
+			do
+			{
+				Console.Write("Choose the move option from your queue to replace (1 to 7): ");
+				input = GetValidInt();
+				if (input < 1 || input > 7) Console.WriteLine("This move option isn't between 1 and 7.");
+			}
+			while (input < 1 || input > 7);
+
+			ReplaceChoice = input;
 			CurrentPlayer.UpdateMoveOptionQueueWithOffer(ReplaceChoice - 1, CreateMoveOption(MoveOptionOffer[MoveOptionOfferPosition], CurrentPlayer.GetDirection()));
 			CurrentPlayer.ChangeScore(-(10 - (ReplaceChoice * 2)));
 			MoveOptionOfferPosition = RGen.Next(0, 5);
@@ -234,15 +264,20 @@ namespace Dastan
 				{
 					Console.WriteLine("You have been awarded a Wafr, you can select any move from your queue for free this turn");
 
-					Console.Write("Choose any move option to use from queue: ");
-					Choice = Convert.ToInt32(Console.ReadLine());
+					do
+					{
+						Console.Write("Choose any move option to use from queue: ");
+						Choice = GetValidInt();
+					}
+					while (Choice > 7);
+
 				}
 				else
 				{
 					do
 					{
 						Console.Write("Choose move option to use from queue (1 to 3) or 9 to take the offer: ");
-						Choice = Convert.ToInt32(Console.ReadLine());
+						Choice = GetValidInt();
 
 						if (Choice == 8)
 						{
