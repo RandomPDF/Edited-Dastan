@@ -316,9 +316,12 @@ namespace Dastan
 					FinishSquareReference = GetSquareReference("to move to");
 					SquareIsValid = CheckSquareIsValid(FinishSquareReference, false);
 				}
+				int previousScore = -1;
 				bool MoveLegal = CurrentPlayer.CheckPlayerMove(Choice, StartSquareReference, FinishSquareReference);
 				if (MoveLegal)
 				{
+					previousScore = CurrentPlayer.GetScore();
+
 					int PointsForPieceCapture = CalculatePieceCapturePoints(FinishSquareReference);
 					if (!useWafr) CurrentPlayer.ChangeScore(-(Choice + (2 * (Choice - 1))));
 					else CurrentPlayer.SetWafrAwarded(true);
@@ -326,7 +329,21 @@ namespace Dastan
 					UpdateBoard(StartSquareReference, FinishSquareReference);
 					UpdatePlayerScore(PointsForPieceCapture);
 					Console.WriteLine("New score: " + CurrentPlayer.GetScore() + Environment.NewLine);
+
+					DisplayBoard();
+					Console.Write("Would you like to undo this move (y/n): ");
+
+					if (Console.ReadLine() == "y")
+					{
+						CurrentPlayer.ChangeScore(previousScore - CurrentPlayer.GetScore() - 5);
+						CurrentPlayer.ResetQueueBackAfterUndo(Choice);
+						UpdateBoard(FinishSquareReference, StartSquareReference);
+
+						if (CurrentPlayer.SameAs(Players[0])) CurrentPlayer = Players[1];
+						else CurrentPlayer = Players[0];
+					}
 				}
+
 				if (CurrentPlayer.SameAs(Players[0])) CurrentPlayer = Players[1];
 				else CurrentPlayer = Players[0];
 
@@ -722,6 +739,13 @@ namespace Dastan
 		}
 
 		public MoveOption GetMoveOptionInPosition(int Pos) { return Queue[Pos]; }
+
+		public void ResetQueueBack(int Position)
+		{
+			MoveOption Temp = Queue[Queue.Count - 1];
+			Queue.RemoveAt(Queue.Count - 1);
+			Queue.Insert(Position - 1, Temp);
+		}
 	}
 
 	class Player
@@ -761,6 +785,8 @@ namespace Dastan
 		{
 			Queue.Replace(Position, NewMoveOption);
 		}
+
+		public void ResetQueueBackAfterUndo(int Position) { Queue.ResetQueueBack(Position); }
 
 		public int GetScore() { return Score; }
 
