@@ -90,7 +90,11 @@ namespace Dastan
 		private void DisplayState()
 		{
 			DisplayBoard();
-			Console.WriteLine("Move option offer: " + MoveOptionOffer[MoveOptionOfferPosition]);
+			Console.WriteLine("You have " + CurrentPlayer.GetChoiceOptionsLeft() + " more offers to grab.");
+
+			if (CurrentPlayer.GetChoiceOptionsLeft() > 0)
+				Console.WriteLine("Move option offer: " + MoveOptionOffer[MoveOptionOfferPosition]);
+
 			Console.WriteLine();
 			Console.WriteLine(CurrentPlayer.GetPlayerStateAsString());
 			Console.WriteLine("Turn: " + CurrentPlayer.GetName());
@@ -206,6 +210,7 @@ namespace Dastan
 			CurrentPlayer.UpdateMoveOptionQueueWithOffer(ReplaceChoice - 1, CreateMoveOption(MoveOptionOffer[MoveOptionOfferPosition], CurrentPlayer.GetDirection()));
 			CurrentPlayer.ChangeScore(-(10 - (ReplaceChoice * 2)));
 			MoveOptionOfferPosition = RGen.Next(0, 5);
+			CurrentPlayer.DecreaseChoiceOptionsLeft();
 		}
 
 		private void UseSpyOption()
@@ -276,7 +281,12 @@ namespace Dastan
 				{
 					do
 					{
-						Console.Write("Choose move option to use from queue (1 to 3) or 9 to take the offer: ");
+						if (CurrentPlayer.GetChoiceOptionsLeft() > 0)
+						{
+							Console.Write("Choose move option to use from queue (1 to 3) or 9 to take the offer: ");
+						}
+						else Console.Write("Choose move option to use from queue (1 to 3): ");
+
 						Choice = GetValidInt();
 
 						if (Choice == 8)
@@ -284,7 +294,7 @@ namespace Dastan
 							UseSpyOption();
 							DisplayState();
 						}
-						else if (Choice == 9)
+						else if (Choice == 9 && CurrentPlayer.GetChoiceOptionsLeft() > 0)
 						{
 							UseMoveOptionOffer();
 							DisplayState();
@@ -719,6 +729,7 @@ namespace Dastan
 		private string Name;
 		private int Direction, Score;
 		private bool WafrAwarded;
+		private int ChoiceOptionsLeft = 3;
 		private MoveOptionQueue Queue = new MoveOptionQueue();
 
 		public Player(string N, int D)
@@ -758,6 +769,10 @@ namespace Dastan
 		public int GetDirection() { return Direction; }
 
 		public bool GetWafrAwarded() { return WafrAwarded; }
+
+		public int GetChoiceOptionsLeft() { return ChoiceOptionsLeft; }
+
+		public void DecreaseChoiceOptionsLeft() { ChoiceOptionsLeft--; }
 
 		public void SetWafrAwarded(bool newState) { WafrAwarded = newState; }
 
