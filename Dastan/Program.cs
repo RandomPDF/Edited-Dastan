@@ -226,6 +226,24 @@ namespace Dastan
 			}
 		}
 
+		private void SacraficePiece()
+		{
+			bool SquareIsValid = false;
+			int SacraficeReference = 0;
+
+			do
+			{
+				SacraficeReference = GetSquareReference("containing the piece to sacrafice");
+				SquareIsValid = CheckSquareIsValid(SacraficeReference, true);
+			}
+			while (!SquareIsValid);
+
+			if (Board[GetIndexOfSquare(SacraficeReference)].ContainsKotla()) return;
+
+			if(CurrentPlayer.SameAs(Players[0])) Board[GetIndexOfSquare(SacraficeReference)] = new Kotla(CurrentPlayer, "K");
+			else if(CurrentPlayer.SameAs(Players[1])) Board[GetIndexOfSquare(SacraficeReference)] = new Kotla(CurrentPlayer, "k");
+		}
+
 		private int GetPointsForOccupancyByPlayer(Player CurrentPlayer)
 		{
 			int ScoreAdjustment = 0;
@@ -283,9 +301,9 @@ namespace Dastan
 					{
 						if (CurrentPlayer.GetChoiceOptionsLeft() > 0)
 						{
-							Console.Write("Choose move option to use from queue (1 to 3) or 9 to take the offer: ");
+							Console.Write("Choose move option to use from queue (1 to 3) or 9 to take the offer or 10 to sacrifice a piece: ");
 						}
-						else Console.Write("Choose move option to use from queue (1 to 3): ");
+						else Console.Write("Choose move option to use from queue (1 to 3) or 10 to sacrifice a piece: ");
 
 						Choice = GetValidInt();
 
@@ -299,48 +317,55 @@ namespace Dastan
 							UseMoveOptionOffer();
 							DisplayState();
 						}
+						else if(Choice == 10)
+                        {
+							SacraficePiece();
+						}
 					}
-					while (Choice < 1 || Choice > 3);
+					while ((Choice < 1 || Choice > 3) && Choice != 10);
 				}
 
-				int StartSquareReference = 0;
-				while (!SquareIsValid)
+				if (Choice != 10)
 				{
-					StartSquareReference = GetSquareReference("containing the piece to move");
-					SquareIsValid = CheckSquareIsValid(StartSquareReference, true);
-				}
-				int FinishSquareReference = 0;
-				SquareIsValid = false;
-				while (!SquareIsValid)
-				{
-					FinishSquareReference = GetSquareReference("to move to");
-					SquareIsValid = CheckSquareIsValid(FinishSquareReference, false);
-				}
-				int previousScore = -1;
-				bool MoveLegal = CurrentPlayer.CheckPlayerMove(Choice, StartSquareReference, FinishSquareReference);
-				if (MoveLegal)
-				{
-					previousScore = CurrentPlayer.GetScore();
-
-					int PointsForPieceCapture = CalculatePieceCapturePoints(FinishSquareReference);
-					if (!useWafr) CurrentPlayer.ChangeScore(-(Choice + (2 * (Choice - 1))));
-					else CurrentPlayer.SetWafrAwarded(true);
-					CurrentPlayer.UpdateQueueAfterMove(Choice);
-					UpdateBoard(StartSquareReference, FinishSquareReference);
-					UpdatePlayerScore(PointsForPieceCapture);
-					Console.WriteLine("New score: " + CurrentPlayer.GetScore() + Environment.NewLine);
-
-					DisplayBoard();
-					Console.Write("Would you like to undo this move (y/n): ");
-
-					if (Console.ReadLine() == "y")
+					int StartSquareReference = 0;
+					while (!SquareIsValid)
 					{
-						CurrentPlayer.ChangeScore(previousScore - CurrentPlayer.GetScore() - 5);
-						CurrentPlayer.ResetQueueBackAfterUndo(Choice);
-						UpdateBoard(FinishSquareReference, StartSquareReference);
+						StartSquareReference = GetSquareReference("containing the piece to move");
+						SquareIsValid = CheckSquareIsValid(StartSquareReference, true);
+					}
+					int FinishSquareReference = 0;
+					SquareIsValid = false;
+					while (!SquareIsValid)
+					{
+						FinishSquareReference = GetSquareReference("to move to");
+						SquareIsValid = CheckSquareIsValid(FinishSquareReference, false);
+					}
+					int previousScore = -1;
+					bool MoveLegal = CurrentPlayer.CheckPlayerMove(Choice, StartSquareReference, FinishSquareReference);
+					if (MoveLegal)
+					{
+						previousScore = CurrentPlayer.GetScore();
 
-						if (CurrentPlayer.SameAs(Players[0])) CurrentPlayer = Players[1];
-						else CurrentPlayer = Players[0];
+						int PointsForPieceCapture = CalculatePieceCapturePoints(FinishSquareReference);
+						if (!useWafr) CurrentPlayer.ChangeScore(-(Choice + (2 * (Choice - 1))));
+						else CurrentPlayer.SetWafrAwarded(true);
+						CurrentPlayer.UpdateQueueAfterMove(Choice);
+						UpdateBoard(StartSquareReference, FinishSquareReference);
+						UpdatePlayerScore(PointsForPieceCapture);
+						Console.WriteLine("New score: " + CurrentPlayer.GetScore() + Environment.NewLine);
+
+						DisplayBoard();
+						Console.Write("Would you like to undo this move (y/n): ");
+
+						if (Console.ReadLine() == "y")
+						{
+							CurrentPlayer.ChangeScore(previousScore - CurrentPlayer.GetScore() - 5);
+							CurrentPlayer.ResetQueueBackAfterUndo(Choice);
+							UpdateBoard(FinishSquareReference, StartSquareReference);
+
+							if (CurrentPlayer.SameAs(Players[0])) CurrentPlayer = Players[1];
+							else CurrentPlayer = Players[0];
+						}
 					}
 				}
 
@@ -349,11 +374,12 @@ namespace Dastan
 
 				GameOver = CheckIfGameOver();
 			}
+
 			DisplayState();
 			DisplayFinalResult();
 		}
 
-		private void UpdateBoard(int StartSquareReference, int FinishSquareReference)
+        private void UpdateBoard(int StartSquareReference, int FinishSquareReference)
 		{
 			Board[GetIndexOfSquare(FinishSquareReference)].SetPiece(Board[GetIndexOfSquare(StartSquareReference)].RemovePiece());
 		}
@@ -811,3 +837,171 @@ namespace Dastan
 		}
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//piss
