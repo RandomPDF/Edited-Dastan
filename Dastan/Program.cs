@@ -55,6 +55,25 @@ namespace Dastan
 			Players.Add(new Player(name2, -1));
 		}
 
+		private void CalculateSahmMove(int StartSquareReference)
+		{
+			bool inBounds = true;
+			int CurrentSquareReference = StartSquareReference;
+			do
+			{
+				CurrentSquareReference += 10 * CurrentPlayer.GetDirection();
+
+				if (CheckSquareInBounds(CurrentSquareReference) &&
+					!Board[GetIndexOfSquare(CurrentSquareReference)].ContainsKotla())
+				{
+					UpdatePlayerScore(CalculatePieceCapturePoints(CurrentSquareReference));
+					Board[GetIndexOfSquare(CurrentSquareReference)].RemovePiece();
+				}
+				else inBounds = false;
+			}
+			while (inBounds);
+		}
+
 		private void DisplayBoard()
 		{
 			Console.Write(Environment.NewLine + "   ");
@@ -283,9 +302,9 @@ namespace Dastan
 					{
 						if (CurrentPlayer.GetChoiceOptionsLeft() > 0)
 						{
-							Console.Write("Choose move option to use from queue (1 to 3) or 9 to take the offer: ");
+							Console.Write("Choose move option to use from queue (1 to 3) or 8 to spy on the opponents queue or 9 to take the offer: ");
 						}
-						else Console.Write("Choose move option to use from queue (1 to 3): ");
+						else Console.Write("Choose move option to use from queue (1 to 3) or 8 to spy on the opponents queue: ");
 
 						Choice = GetValidInt();
 
@@ -303,44 +322,60 @@ namespace Dastan
 					while (Choice < 1 || Choice > 3);
 				}
 
-				int StartSquareReference = 0;
-				while (!SquareIsValid)
+				if (CurrentPlayer.ChoiceIsSahm(Choice))
 				{
-					StartSquareReference = GetSquareReference("containing the piece to move");
-					SquareIsValid = CheckSquareIsValid(StartSquareReference, true);
-				}
-				int FinishSquareReference = 0;
-				SquareIsValid = false;
-				while (!SquareIsValid)
-				{
-					FinishSquareReference = GetSquareReference("to move to");
-					SquareIsValid = CheckSquareIsValid(FinishSquareReference, false);
-				}
-				int previousScore = -1;
-				bool MoveLegal = CurrentPlayer.CheckPlayerMove(Choice, StartSquareReference, FinishSquareReference);
-				if (MoveLegal)
-				{
-					previousScore = CurrentPlayer.GetScore();
-
-					int PointsForPieceCapture = CalculatePieceCapturePoints(FinishSquareReference);
-					if (!useWafr) CurrentPlayer.ChangeScore(-(Choice + (2 * (Choice - 1))));
-					else CurrentPlayer.SetWafrAwarded(true);
-					CurrentPlayer.UpdateQueueAfterMove(Choice);
-					UpdateBoard(StartSquareReference, FinishSquareReference);
-					UpdatePlayerScore(PointsForPieceCapture);
-					Console.WriteLine("New score: " + CurrentPlayer.GetScore() + Environment.NewLine);
-
-					DisplayBoard();
-					Console.Write("Would you like to undo this move (y/n): ");
-
-					if (Console.ReadLine() == "y")
+					int _StartSquareReference = 0;
+					while (!SquareIsValid)
 					{
-						CurrentPlayer.ChangeScore(previousScore - CurrentPlayer.GetScore() - 5);
-						CurrentPlayer.ResetQueueBackAfterUndo(Choice);
-						UpdateBoard(FinishSquareReference, StartSquareReference);
+						_StartSquareReference = GetSquareReference("to start from.");
+						SquareIsValid = CheckSquareIsValid(_StartSquareReference, true);
+					}
 
-						if (CurrentPlayer.SameAs(Players[0])) CurrentPlayer = Players[1];
-						else CurrentPlayer = Players[0];
+					CalculateSahmMove(_StartSquareReference);
+					CurrentPlayer.SetSahmUsed();
+				}
+				else
+				{
+					int StartSquareReference = 0;
+					while (!SquareIsValid)
+					{
+						StartSquareReference = GetSquareReference("containing the piece to move");
+						SquareIsValid = CheckSquareIsValid(StartSquareReference, true);
+					}
+
+					int FinishSquareReference = 0;
+					SquareIsValid = false;
+					while (!SquareIsValid)
+					{
+						FinishSquareReference = GetSquareReference("to move to");
+						SquareIsValid = CheckSquareIsValid(FinishSquareReference, false);
+					}
+					int previousScore = -1;
+					bool MoveLegal = CurrentPlayer.CheckPlayerMove(Choice, StartSquareReference, FinishSquareReference);
+					if (MoveLegal)
+					{
+						previousScore = CurrentPlayer.GetScore();
+
+						int PointsForPieceCapture = CalculatePieceCapturePoints(FinishSquareReference);
+						if (!useWafr) CurrentPlayer.ChangeScore(-(Choice + (2 * (Choice - 1))));
+						else CurrentPlayer.SetWafrAwarded();
+						CurrentPlayer.UpdateQueueAfterMove(Choice);
+						UpdateBoard(StartSquareReference, FinishSquareReference);
+						UpdatePlayerScore(PointsForPieceCapture);
+						Console.WriteLine("New score: " + CurrentPlayer.GetScore() + Environment.NewLine);
+
+						DisplayBoard();
+						Console.Write("Would you like to undo this move (y/n): ");
+
+						if (Console.ReadLine() == "y")
+						{
+							CurrentPlayer.ChangeScore(previousScore - CurrentPlayer.GetScore() - 5);
+							CurrentPlayer.ResetQueueBackAfterUndo(Choice);
+							UpdateBoard(FinishSquareReference, StartSquareReference);
+
+							if (CurrentPlayer.SameAs(Players[0])) CurrentPlayer = Players[1];
+							else CurrentPlayer = Players[0];
+						}
 					}
 				}
 
@@ -408,6 +443,7 @@ namespace Dastan
 
 		private void CreateMoveOptionOffer()
 		{
+			MoveOptionOffer.Add("sahm");
 			MoveOptionOffer.Add("jazair");
 			MoveOptionOffer.Add("chowkidar");
 			MoveOptionOffer.Add("cuirassier");
@@ -417,7 +453,13 @@ namespace Dastan
 			MoveOptionOffer.Add("sarukh");
 		}
 
-		private MoveOption CreateSpyOption() { return new MoveOption("spy"); }
+		private MoveOption CreateSahmMoveOption()
+		{
+			MoveOption NewMoveOption = new MoveOption("sahm");
+			Move NewMove = new Move(0, 0);
+			NewMoveOption.AddToPossibleMoves(NewMove);
+			return NewMoveOption;
+		}
 
 		private MoveOption CreateSarukhMoveOption(int Direction)
 		{
@@ -545,7 +587,7 @@ namespace Dastan
 			else if (Name == "jazair") return CreateJazairMoveOption(Direction);
 			else if (Name == "faris") return CreateFarisMoveOption(Direction);
 			else if (Name == "sarukh") return CreateSarukhMoveOption(Direction);
-			else if (Name == "spy") return CreateSpyOption();
+			else if (Name == "sahm") return CreateSahmMoveOption();
 
 			return CreateCuirassierMoveOption(Direction);
 		}
@@ -553,22 +595,20 @@ namespace Dastan
 		private void CreateMoveOptions()
 		{
 			Players[0].AddToMoveOptionQueue(CreateMoveOption("ryott", 1));
+			Players[0].AddToMoveOptionQueue(CreateMoveOption("chowkidar", 1));
 			Players[0].AddToMoveOptionQueue(CreateMoveOption("sarukh", 1));
 			Players[0].AddToMoveOptionQueue(CreateMoveOption("faris", 1));
-			Players[0].AddToMoveOptionQueue(CreateMoveOption("chowkidar", 1));
 			Players[0].AddToMoveOptionQueue(CreateMoveOption("cuirassier", 1));
 			Players[0].AddToMoveOptionQueue(CreateMoveOption("faujdar", 1));
 			Players[0].AddToMoveOptionQueue(CreateMoveOption("jazair", 1));
-			Players[0].AddToMoveOptionQueue(CreateMoveOption("spy", 1));
 
 			Players[1].AddToMoveOptionQueue(CreateMoveOption("ryott", -1));
+			Players[1].AddToMoveOptionQueue(CreateMoveOption("chowkidar", -1));
 			Players[1].AddToMoveOptionQueue(CreateMoveOption("sarukh", -1));
 			Players[1].AddToMoveOptionQueue(CreateMoveOption("faris", -1));
-			Players[1].AddToMoveOptionQueue(CreateMoveOption("chowkidar", -1));
 			Players[1].AddToMoveOptionQueue(CreateMoveOption("jazair", -1));
 			Players[1].AddToMoveOptionQueue(CreateMoveOption("faujdar", -1));
 			Players[1].AddToMoveOptionQueue(CreateMoveOption("cuirassier", -1));
-			Players[1].AddToMoveOptionQueue(CreateMoveOption("spy", -1));
 		}
 	}
 
@@ -753,6 +793,7 @@ namespace Dastan
 		private string Name;
 		private int Direction, Score;
 		private bool WafrAwarded;
+		private bool SahmUsed = false;
 		private int ChoiceOptionsLeft = 3;
 		private MoveOptionQueue Queue = new MoveOptionQueue();
 
@@ -796,11 +837,15 @@ namespace Dastan
 
 		public bool GetWafrAwarded() { return WafrAwarded; }
 
+		public bool GetSahmStatus() { return SahmUsed; }
+
 		public int GetChoiceOptionsLeft() { return ChoiceOptionsLeft; }
 
 		public void DecreaseChoiceOptionsLeft() { ChoiceOptionsLeft--; }
 
-		public void SetWafrAwarded(bool newState) { WafrAwarded = newState; }
+		public void SetWafrAwarded() { WafrAwarded = true; }
+
+		public void SetSahmUsed() { SahmUsed = true; }
 
 		public void ChangeScore(int Amount) { Score += Amount; }
 
@@ -808,6 +853,12 @@ namespace Dastan
 		{
 			MoveOption Temp = Queue.GetMoveOptionInPosition(Pos - 1);
 			return Temp.CheckIfThereIsAMoveToSquare(StartSquareReference, FinishSquareReference);
+		}
+
+		public bool ChoiceIsSahm(int Choice)
+		{
+			if (Queue.GetMoveOptionInPosition(Choice - 1).GetName() == "sahm") return true;
+			return false;
 		}
 	}
 }
