@@ -366,9 +366,9 @@ namespace Dastan
 					{
 						if (CurrentPlayer.GetChoiceOptionsLeft() > 0)
 						{
-							Console.Write("Choose move option to use from queue (1 to 3) or 9 to take the offer or 10 to sacrifice a piece or 11 to change the queue: ");
+							Console.Write("Choose move option to use from queue (1 to 3) or 8 to spy on the opponents queue 9 to take the offer or 10 to sacrifice a piece or 11 to change the queue: ");
 						}
-						else Console.Write("Choose move option to use from queue (1 to 3) or 10 to sacrifice a piece or 11 to change the queue: ");
+						else Console.Write("Choose move option to use from queue (1 to 3) or 8 to spy on the opponents queue 10 to sacrifice a piece or 11 to change the queue: ");
 
 						Choice = GetValidInt();
 
@@ -853,6 +853,8 @@ namespace Dastan
 
 		public MoveOption GetMoveOptionInPosition(int Pos) { return Queue[Pos]; }
 
+		public int GetQueueSize() { return Queue.Count; }
+
 		public void ResetQueueBack(int Position)
 		{
 			MoveOption Temp = Queue[Queue.Count - 1];
@@ -942,183 +944,23 @@ namespace Dastan
 			MoveOption Temp = Queue.GetMoveOptionInPosition(Pos - 1);
 			return Temp.CheckIfThereIsAMoveToSquare(StartSquareReference, FinishSquareReference);
 		}
+
+		public bool ChoiceIsSahm(int Choice)
+		{
+			if (Choice <= Queue.GetQueueSize() && Choice > 0 &&
+				Queue.GetMoveOptionInPosition(Choice - 1).GetName() == "sahm") return true;
+
+			return false;
+		}
+
+		public void ReversePlayerQueue() { Queue.ReverseQueue(); }
+
+		public void SwapFirstAndLast() { Queue.SwapFirstAndLast(); }
+
+		public void MoveItemToFront(int position) { Queue.MoveItemToFront(position); }
+
+		public void ReplaceQueue(MoveOptionQueue queue) { Queue = queue; }
+
+		public MoveOptionQueue GetMoveOptionQueue() { return Queue; }
 	}
 }
-
-
-
-
-
-public void ReplaceQueue(MoveOptionQueue queue) { Queue = queue; }
-
-public MoveOptionQueue GetMoveOptionQueue() { return Queue; }
-	}
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//piss
