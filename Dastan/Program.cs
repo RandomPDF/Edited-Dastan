@@ -245,6 +245,70 @@ namespace Dastan
 			}
 		}
 
+		private void SacraficePiece()
+		{
+			bool SquareIsValid = false;
+			int SacraficeReference = 0;
+
+			do
+			{
+				SacraficeReference = GetSquareReference("containing the piece to sacrafice");
+				SquareIsValid = CheckSquareIsValid(SacraficeReference, true);
+			}
+			while (!SquareIsValid);
+
+			if (Board[GetIndexOfSquare(SacraficeReference)].ContainsKotla()) return;
+
+			if (CurrentPlayer.SameAs(Players[0])) Board[GetIndexOfSquare(SacraficeReference)] = new Kotla(CurrentPlayer, "K");
+			else if (CurrentPlayer.SameAs(Players[1])) Board[GetIndexOfSquare(SacraficeReference)] = new Kotla(CurrentPlayer, "k");
+		}
+
+		private void ModifyQueueOptions()
+		{
+			Console.WriteLine("You can:");
+			Console.WriteLine("1. Reverse the current player queue");
+			Console.WriteLine("2. Swap the current players queue with the opponents queue");
+			Console.WriteLine("3. Swap the first and last elements in the current players queue");
+			Console.WriteLine("4. Move one of the move options to the front of the current player queue");
+			Console.WriteLine("5. Nothing (make normal move)\n");
+			Console.WriteLine("What would you like to do?");
+
+			int Choice = -1;
+			do
+			{
+				Choice = GetValidInt();
+			}
+			while (Choice < 0 || Choice > 6);
+
+			if (Choice != 5) CurrentPlayer.ChangeScore(-3);
+
+			switch (Choice)
+			{
+				case 1:
+					CurrentPlayer.ReversePlayerQueue();
+					break;
+
+				case 2:
+					Player opponent;
+					if (CurrentPlayer.SameAs(Players[0])) opponent = Players[1];
+					else opponent = Players[2];
+
+					CurrentPlayer.ReplaceQueue(opponent.GetMoveOptionQueue());
+					break;
+
+				case 3:
+					CurrentPlayer.SwapFirstAndLast();
+					break;
+
+				case 4:
+					Console.Write("What is the item you want to move to the front of the queue: ");
+					CurrentPlayer.MoveItemToFront(GetValidInt());
+					break;
+			}
+
+			Console.WriteLine($"The current queue is: {CurrentPlayer.GetJustQueueAsString()}");
+		}
+
 		private int GetPointsForOccupancyByPlayer(Player CurrentPlayer)
 		{
 			int ScoreAdjustment = 0;
@@ -302,9 +366,9 @@ namespace Dastan
 					{
 						if (CurrentPlayer.GetChoiceOptionsLeft() > 0)
 						{
-							Console.Write("Choose move option to use from queue (1 to 3) or 8 to spy on the opponents queue or 9 to take the offer: ");
+							Console.Write("Choose move option to use from queue (1 to 3) or 9 to take the offer or 10 to sacrifice a piece or 11 to change the queue: ");
 						}
-						else Console.Write("Choose move option to use from queue (1 to 3) or 8 to spy on the opponents queue: ");
+						else Console.Write("Choose move option to use from queue (1 to 3) or 10 to sacrifice a piece or 11 to change the queue: ");
 
 						Choice = GetValidInt();
 
@@ -318,8 +382,16 @@ namespace Dastan
 							UseMoveOptionOffer();
 							DisplayState();
 						}
+						else if (Choice == 10)
+						{
+							SacraficePiece();
+						}
+						else if (Choice == 11)
+						{
+							ModifyQueueOptions();
+						}
 					}
-					while (Choice < 1 || Choice > 3);
+					while ((Choice < 1 || Choice > 3) && Choice != 10);
 				}
 
 				if (CurrentPlayer.ChoiceIsSahm(Choice))
@@ -334,7 +406,7 @@ namespace Dastan
 					CalculateSahmMove(_StartSquareReference);
 					CurrentPlayer.SetSahmUsed();
 				}
-				else
+				else if (Choice != 10)
 				{
 					int StartSquareReference = 0;
 					while (!SquareIsValid)
@@ -384,6 +456,7 @@ namespace Dastan
 
 				GameOver = CheckIfGameOver();
 			}
+
 			DisplayState();
 			DisplayFinalResult();
 		}
@@ -786,6 +859,21 @@ namespace Dastan
 			Queue.RemoveAt(Queue.Count - 1);
 			Queue.Insert(Position - 1, Temp);
 		}
+
+		public void ReverseQueue() { Queue.Reverse(); }
+
+		public void SwapFirstAndLast()
+		{
+			MoveOption Temp = Queue[Queue.Count - 1];
+			Replace(Queue.Count - 1, Queue[0]);
+			Replace(0, Temp);
+		}
+
+		public void MoveItemToFront(int position)
+		{
+			Queue.Insert(0, Queue[position - 1]);
+			Queue.RemoveAt(position);
+		}
 	}
 
 	class Player
@@ -854,11 +942,183 @@ namespace Dastan
 			MoveOption Temp = Queue.GetMoveOptionInPosition(Pos - 1);
 			return Temp.CheckIfThereIsAMoveToSquare(StartSquareReference, FinishSquareReference);
 		}
-
-		public bool ChoiceIsSahm(int Choice)
-		{
-			if (Queue.GetMoveOptionInPosition(Choice - 1).GetName() == "sahm") return true;
-			return false;
-		}
 	}
 }
+
+
+
+
+
+public void ReplaceQueue(MoveOptionQueue queue) { Queue = queue; }
+
+public MoveOptionQueue GetMoveOptionQueue() { return Queue; }
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//piss
