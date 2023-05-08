@@ -19,7 +19,7 @@ namespace Dastan
 	class Dastan
 	{
 		protected List<Square> Board;
-		protected int NoOfRows, NoOfColumns, MoveOptionOfferPosition;
+		protected int NoOfRows, NoOfColumns, NoOfPieces, MoveOptionOfferPosition;
 		protected List<Player> Players = new List<Player>();
 		protected List<string> MoveOptionOffer = new List<string>();
 		protected Player CurrentPlayer;
@@ -31,6 +31,7 @@ namespace Dastan
 			CreateMoveOptions();
 			NoOfRows = R;
 			NoOfColumns = C;
+			this.NoOfPieces = NoOfPieces;
 			MoveOptionOfferPosition = 0;
 			CreateMoveOptionOffer();
 			CreateBoard();
@@ -72,6 +73,19 @@ namespace Dastan
 				else inBounds = false;
 			}
 			while (inBounds);
+		}
+
+		private int CountNormalPieces()
+		{
+			int count = 0;
+
+			for (int i = 0; i < Board.Count; i++)
+			{
+				if (Board[i].GetPieceInSquare() != null && Board[i].GetPieceInSquare().GetTypeOfPiece() != "mirza" &&
+					Board[i].GetBelongsTo() == CurrentPlayer) count++;
+			}
+
+			return count;
 		}
 
 		private void DisplayBoard()
@@ -426,6 +440,8 @@ namespace Dastan
 					bool MoveLegal = CurrentPlayer.CheckPlayerMove(Choice, StartSquareReference, FinishSquareReference);
 					if (MoveLegal)
 					{
+						CheckReincarnation(FinishSquareReference);
+
 						previousScore = CurrentPlayer.GetScore();
 
 						int PointsForPieceCapture = CalculatePieceCapturePoints(FinishSquareReference);
@@ -459,6 +475,31 @@ namespace Dastan
 
 			DisplayState();
 			DisplayFinalResult();
+		}
+
+		private void CheckReincarnation(int FinishSquareReference)
+		{
+			if (FinishSquareReference / 10 == 6 && CountNormalPieces() < NoOfPieces)
+			{
+				int squareReference = int.MinValue;
+
+				do
+				{
+					squareReference = GetSquareReference("to place a reincarnated piece.");
+
+					if (Board[GetIndexOfSquare(squareReference)].GetPieceInSquare() != null)
+					{
+						Console.WriteLine("The square entered must be empty.");
+					}
+				}
+				while (Board[GetIndexOfSquare(squareReference)].GetPieceInSquare() != null);
+
+				Piece piece;
+				if (CurrentPlayer == Players[0]) piece = new Piece("piece", Players[0], 1, "!");
+				else piece = new Piece("piece", Players[1], 1, "\"");
+
+				Board[GetIndexOfSquare(squareReference)].SetPiece(piece);
+			}
 		}
 
 		private void UpdateBoard(int StartSquareReference, int FinishSquareReference)
