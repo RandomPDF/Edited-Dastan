@@ -88,6 +88,34 @@ namespace Dastan
 			return count;
 		}
 
+		public int WeatherEventOccurs()
+		{
+			if (RGen.Next(0, 2) == 0)
+			{
+				bool found = false;
+				int index;
+
+				do
+				{
+					string reference = $"{RGen.Next(1, NoOfRows + 1)}{RGen.Next(1, NoOfColumns + 1)}";
+					index = GetIndexOfSquare(Convert.ToInt32(reference));
+					if (Board[index].GetSymbol() == " ")
+					{
+						found = true;
+						Board[index] = new WeatherEvent();
+						((WeatherEvent)Board[index]).SetWeatherLocation(Convert.ToInt32(reference[1].ToString()));
+
+						Console.WriteLine($"WARNING! A weather event has taken place in column {reference[1]}.");
+					}
+				}
+				while (!found);
+
+				return index;
+			}
+
+			return -1;
+		}
+
 		private void DisplayBoard()
 		{
 			Console.Write(Environment.NewLine + "   ");
@@ -353,10 +381,34 @@ namespace Dastan
 
 		public void PlayGame()
 		{
+			int EventIndex = -1;
 			bool GameOver = false;
 			while (!GameOver)
 			{
 				DisplayState();
+
+				if (EventIndex == -1) EventIndex = WeatherEventOccurs();
+				if (EventIndex != -1)
+				{
+					WeatherEvent Event = (WeatherEvent)Board[EventIndex];
+					if (Event.CountDownComplete())
+					{
+						for (int i = 1; i <= NoOfRows; i++)
+						{
+							int reference = Event.GetWetherLocation() + i * 10;
+							Board[GetIndexOfSquare(reference)] = new Square();
+						}
+
+						Board[EventIndex] = new Square();
+						EventIndex = -1;
+						DisplayBoard();
+					}
+					else
+					{
+						Console.WriteLine($"WARNING! The weather event will occur in {Event.countdown} turns.");
+						Event.countdown--;
+					}
+				}
 
 				bool SquareIsValid = false;
 				int Choice;
@@ -1056,6 +1108,32 @@ namespace Dastan
 		public override bool GetCampedTwoTurns()
 		{
 			return CampedTurns == 4;
+		}
+	}
+
+	class WeatherEvent : Square
+	{
+		public int countdown;
+		private int column;
+
+		public WeatherEvent() : base()
+		{
+			countdown = 4;
+		}
+
+		public bool CountDownComplete()
+		{
+			return countdown == 0;
+		}
+
+		public void SetWeatherLocation(int column)
+		{
+			this.column = column;
+		}
+
+		public int GetWetherLocation()
+		{
+			return column;
 		}
 	}
 }
