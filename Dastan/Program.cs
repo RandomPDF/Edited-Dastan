@@ -445,7 +445,13 @@ namespace Dastan
 						previousScore = CurrentPlayer.GetScore();
 
 						int PointsForPieceCapture = CalculatePieceCapturePoints(FinishSquareReference);
-						if (!useWafr) CurrentPlayer.ChangeScore(-(Choice + (2 * (Choice - 1))));
+						if (!useWafr)
+						{
+							if (!Board[GetIndexOfSquare(Convert.ToInt32($"{NoOfRows / 2}{NoOfColumns / 2}"))].GetCampedTwoTurns())
+							{
+								CurrentPlayer.ChangeScore(-(Choice + (2 * (Choice - 1))));
+							}
+						}
 						else CurrentPlayer.SetWafrAwarded();
 						CurrentPlayer.UpdateQueueAfterMove(Choice);
 						UpdateBoard(StartSquareReference, FinishSquareReference);
@@ -530,6 +536,7 @@ namespace Dastan
 				{
 					if (Row == 1 && Column == NoOfColumns / 2) S = new Kotla(Players[0], "K");
 					else if (Row == NoOfRows && Column == NoOfColumns / 2 + 1) S = new Kotla(Players[1], "k");
+					else if (Row == NoOfRows / 2 && Column == NoOfColumns / 2) S = new Taziz("x");
 					else S = new Square();
 					Board.Add(S);
 				}
@@ -710,9 +717,9 @@ namespace Dastan
 		{
 			Players[0].AddToMoveOptionQueue(CreateMoveOption("ryott", 1));
 			Players[0].AddToMoveOptionQueue(CreateMoveOption("chowkidar", 1));
+			Players[0].AddToMoveOptionQueue(CreateMoveOption("cuirassier", 1));
 			Players[0].AddToMoveOptionQueue(CreateMoveOption("sarukh", 1));
 			Players[0].AddToMoveOptionQueue(CreateMoveOption("faris", 1));
-			Players[0].AddToMoveOptionQueue(CreateMoveOption("cuirassier", 1));
 			Players[0].AddToMoveOptionQueue(CreateMoveOption("faujdar", 1));
 			Players[0].AddToMoveOptionQueue(CreateMoveOption("jazair", 1));
 
@@ -782,6 +789,11 @@ namespace Dastan
 		public virtual bool ContainsKotla()
 		{
 			if (Symbol == "K" || Symbol == "k") return true;
+			return false;
+		}
+
+		public virtual bool GetCampedTwoTurns()
+		{
 			return false;
 		}
 	}
@@ -1003,5 +1015,47 @@ namespace Dastan
 		public void ReplaceQueue(MoveOptionQueue queue) { Queue = queue; }
 
 		public MoveOptionQueue GetMoveOptionQueue() { return Queue; }
+	}
+
+	class Taziz : Square
+	{
+		private int CampedTurns = 0;
+
+		public Taziz(string S) : base()
+		{
+			Symbol = S;
+		}
+
+		public override void SetPiece(Piece P)
+		{
+			base.SetPiece(P);
+			BelongsTo = P.GetBelongsTo();
+			PieceInSquare = P;
+
+			if (GetBelongsTo().GetDirection() == 1)
+			{
+				Symbol = "A";
+				CampedTurns = 0;
+			}
+			if (GetBelongsTo().GetDirection() == -1)
+			{
+				Symbol = "a";
+				CampedTurns = 0;
+			}
+		}
+
+		public override Piece RemovePiece()
+		{
+			Symbol = "x";
+			CampedTurns = 0;
+			Piece PieceToReturn = PieceInSquare;
+			PieceInSquare = null;
+			return PieceToReturn;
+		}
+
+		public override bool GetCampedTwoTurns()
+		{
+			return CampedTurns == 4;
+		}
 	}
 }
